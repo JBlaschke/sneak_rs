@@ -48,10 +48,6 @@ impl Args {
 
 
 
-
-
-
-
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use reqwest::blocking::Client;
@@ -61,7 +57,16 @@ fn client() -> std::io::Result<()> {
     let listener = TcpListener::bind("127.0.0.1:3333")?; // Listening on port 3306 for MySQL connections
     let http_client = Client::new();
 
-    println!("Client-side proxy listening on port 3333");
+    info!("Client-side proxy listening on port 3333");
+
+    trace!("Making initial connection request");
+
+    let client_id = http_client
+        .get("http://0.0.0:8080/new_client")
+        .send()
+        .unwrap();
+
+    trace!("Using client ID: {:?}", client_id);
 
     for incoming in listener.incoming() {
         match incoming {
@@ -117,21 +122,30 @@ fn handle_mysql_client(mut mysql_client_stream: TcpStream, http_client: Client) 
 
 
 
-
-
 // use std::io::{Read, Write};
 // use std::net::TcpStream;
 // use std::sync::{Arc, Mutex};
 // use std::thread;
-use tiny_http::{Server, Response, Request};
+use tiny_http::{Server, Response, Request, Method};
 
 fn server() {
     let server = Server::http("0.0.0.0:8080").unwrap(); // HTTP server listening on port 8080
-    println!("Server-side proxy listening on port 8080");
+    info!("Server-side proxy listening on port 8080");
 
     for request in server.incoming_requests() {
-        let request = request;
         trace!("Received incoming request {:?}", request);
+
+        let method = request.method().clone();
+        let path = request.url();
+
+        // Match the path and respond accordingly
+        match (method, path) {
+            (Method::Get, "/new_client") => {
+                trace!("Received request for new client, returning:");
+            },
+            _ => {}
+        }
+
         thread::spawn(move || {
             handle_http_request(request);
         });
