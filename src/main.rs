@@ -54,7 +54,7 @@ use reqwest::blocking::Client;
 use std::thread;
 
 fn client() -> std::io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:3333")?; // Listening on port 3306 for MySQL connections
+    let listener = TcpListener::bind("127.0.0.1:3333")?;
     let http_client = Client::new();
 
     info!("Client-side proxy listening on port 3333");
